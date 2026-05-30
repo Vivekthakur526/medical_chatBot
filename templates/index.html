@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivek's AI Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --bot-msg-bg: #f0f2f5;
+            --user-msg-bg: #764ba2;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0c29;
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        /* Responsive Container */
+        .chat-container {
+            width: 95%;
+            max-width: 500px;
+            height: 85vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Header Design */
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Chat Display Area */
+        #display {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        #display::-webkit-scrollbar { width: 5px; }
+        #display::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+        /* Messages Styling */
+        .msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            animation: msgSlide 0.3s ease;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user-msg-bg);
+            color: white;
+            border-radius: 18px 18px 0 18px;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot-msg-bg);
+            color: #2d3436;
+            border-radius: 18px 18px 18px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Input Area Styling */
+        .input-area {
+            padding: 20px;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        #userQuery {
+            flex: 1;
+            border: 2px solid #f0f2f5;
+            padding: 12px 20px;
+            border-radius: 30px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 0.95rem;
+        }
+
+        #userQuery:focus { border-color: #764ba2; background: #fff; }
+
+        button {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes msgSlide {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .chat-container { height: 95vh; border-radius: 0; width: 100%; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">Medical ChatBot</div>
+    
+    <div id="display">
+        <div class="msg bot" name="answer">✨Welcome! 🏥 I am a medical assistant. Please ask only health or medical-related questions. Non-medical queries will not be answered.</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userQuery" placeholder="write a text" autocomplete="off">
+        <button onclick="sendData()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    async function sendData() {
+        const input = document.getElementById('userQuery');
+        const display = document.getElementById('display');
+        const queryValue = input.value.trim();
+
+        if (!queryValue) return;
+
+        // User message UI
+        display.innerHTML += `<div class="msg user">${queryValue}</div>`;
+        input.value = '';
+        display.scrollTop = display.scrollHeight;
+
+        try {
+            const response = await fetch('/api/chat', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: queryValue }) 
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                display.innerHTML += `<div class="msg bot" name="answer">${data.reply}</div>`;
+            } else {
+                display.innerHTML += `<div class="msg bot" name="answer">⚠️ Server error: Respond nahi mila.</div>`;
+            }
+        } catch (error) {
+            // Demo fallback
+            display.innerHTML += `<div class="msg bot" name="answer"><strong>System:</strong> Yeh ek UI demo hai. Backend connect karne par asli replies milenge!</div>`;
+            console.error("Error:", error);
+        }
+
+        display.scrollTop = display.scrollHeight;
+    }
+
+    document.getElementById('userQuery').addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendData();
+    });
+</script>
+
+</body>
+</html>
